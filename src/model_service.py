@@ -194,13 +194,18 @@ def predict_addicted_score(input_data: dict[str, Any]) -> PredictionResult:
     confidence = None
 
     classifier = model.named_steps.get("model") if hasattr(model, "named_steps") else None
-    if classifier is not None and hasattr(classifier, "classes_") and hasattr(model, "predict_proba"):
-        probability_values = model.predict_proba(sample)[0]
-        probabilities = {
-            int(class_label): round(float(probability), 4)
-            for class_label, probability in zip(classifier.classes_, probability_values)
-        }
-        confidence = probabilities.get(predicted_class)
+
+    if classifier is not None and hasattr(classifier, "classes_"):
+        try:
+            probability_values = model.predict_proba(sample)[0]
+            probabilities = {
+                int(class_label): round(float(probability), 4)
+                for class_label, probability in zip(classifier.classes_, probability_values)
+            }
+            confidence = probabilities.get(predicted_class)
+        except Exception:
+            probabilities = {}
+            confidence = None
 
     return PredictionResult(
         predicted_class=predicted_class,
